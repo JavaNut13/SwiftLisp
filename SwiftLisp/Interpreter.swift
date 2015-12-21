@@ -1,5 +1,5 @@
 //
-//  main.swift
+//  Interpreter.swift
 //  SwiftLisp
 //
 //  Created by Will Richardson on 21/12/15.
@@ -8,6 +8,8 @@
 
 import Foundation
 
-let pr = Program()
-
-pr.parse("(println (defn hello)) [things stuff] ")
+extension Program {
+  func run() {
+    // ??
+  }
+}

@@ -7,7 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		BE69749D1C27B46200825BFC /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE69749C1C27B46200825BFC /* main.swift */; };
+		BE69749D1C27B46200825BFC /* Parser.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE69749C1C27B46200825BFC /* Parser.swift */; };
+		BE6974A41C27E6D200825BFC /* Scanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE6974A31C27E6D200825BFC /* Scanner.swift */; };
+		BE6974A61C280E2E00825BFC /* Interpreter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE6974A51C280E2E00825BFC /* Interpreter.swift */; };
+		BE6974A81C28103B00825BFC /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE6974A71C28103B00825BFC /* main.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -24,7 +27,10 @@
 
 /* Begin PBXFileReference section */
 		BE6974991C27B46200825BFC /* SwiftLisp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SwiftLisp; sourceTree = BUILT_PRODUCTS_DIR; };
-		BE69749C1C27B46200825BFC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		BE69749C1C27B46200825BFC /* Parser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Parser.swift; sourceTree = "<group>"; };
+		BE6974A31C27E6D200825BFC /* Scanner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Scanner.swift; sourceTree = "<group>"; };
+		BE6974A51C280E2E00825BFC /* Interpreter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Interpreter.swift; sourceTree = "<group>"; };
+		BE6974A71C28103B00825BFC /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,7 +63,10 @@
 		BE69749B1C27B46200825BFC /* SwiftLisp */ = {
 			isa = PBXGroup;
 			children = (
-				BE69749C1C27B46200825BFC /* main.swift */,
+				BE69749C1C27B46200825BFC /* Parser.swift */,
+				BE6974A31C27E6D200825BFC /* Scanner.swift */,
+				BE6974A51C280E2E00825BFC /* Interpreter.swift */,
+				BE6974A71C28103B00825BFC /* main.swift */,
 			);
 			path = SwiftLisp;
 			sourceTree = "<group>";
@@ -119,7 +128,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BE69749D1C27B46200825BFC /* main.swift in Sources */,
+				BE6974A61C280E2E00825BFC /* Interpreter.swift in Sources */,
+				BE6974A41C27E6D200825BFC /* Scanner.swift in Sources */,
+				BE6974A81C28103B00825BFC /* main.swift in Sources */,
+				BE69749D1C27B46200825BFC /* Parser.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
