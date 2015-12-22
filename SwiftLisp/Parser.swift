@@ -17,11 +17,20 @@ enum SyntaxError: ErrorType {
 
 protocol Atom: CustomStringConvertible {
   var quoted: Bool { get set }
+  func run(namespace: Namespace) -> Atom
 }
 
 struct Identifier: Atom {
   let value: String
   var quoted: Bool
+  
+  func run(namespace: Namespace) -> Atom {
+    if let v = namespace.functions[value] {
+      return v
+    } else {
+      return Nil()
+    }
+  }
   
   var description: String {
     return (quoted ? "'" : "") + value
@@ -35,6 +44,10 @@ struct Str: Atom {
   init(value: String) {
     self.value = value
     quoted = false
+  }
+  
+  func run(namespace: Namespace) -> Atom {
+    return self
   }
   
   var description: String {
@@ -51,6 +64,10 @@ struct Num: Atom {
     quoted = false
   }
   
+  func run(namespace: Namespace) -> Atom {
+    return self
+  }
+  
   var description: String {
     return String(value)
   }
@@ -58,6 +75,10 @@ struct Num: Atom {
 
 struct Nil: Atom {
   var quoted = false
+  
+  func run(namespace: Namespace) -> Atom {
+    return self
+  }
   
   var description: String {
     return "nil"
