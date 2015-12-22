@@ -23,6 +23,8 @@ protocol Function: Atom {
 struct Native: Function {
   var quoted = false
   let description: String
+  let location: ErrorLocation? = nil
+  
   private let code: (namespace: Namespace, args: [Atom]) -> Atom
   
   init(name: String, code: (namespace: Namespace, args: [Atom]) -> Atom) {
@@ -47,7 +49,7 @@ extension List {
       return lst
     }
     let runChildren = children.map({ $0.run(namespace) })
-    if let fun = runChildren.first as? Function {
+    if let fun = runChildren.first as? Function where !fun.quoted {
       return fun.run(namespace, args: Array(runChildren.dropFirst(1)))
     } else {
       return List(children: runChildren, quoted: true)
@@ -65,6 +67,9 @@ extension Program {
     }
     global.add("+") { _, args in
       return Num(value: args.reduce(0, combine: { $0 + ($1 as! Num).value }))
+    }
+    global.add("*") { _, args in
+      return Num(value: args.reduce(1, combine: { $0 * ($1 as! Num).value }))
     }
     let lst = List(children: statements, quoted: false)
     lst.run(global)

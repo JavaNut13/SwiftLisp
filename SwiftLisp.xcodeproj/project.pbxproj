@@ -11,6 +11,7 @@
 		BE6974A41C27E6D200825BFC /* Scanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE6974A31C27E6D200825BFC /* Scanner.swift */; };
 		BE6974A61C280E2E00825BFC /* Interpreter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE6974A51C280E2E00825BFC /* Interpreter.swift */; };
 		BE6974A81C28103B00825BFC /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE6974A71C28103B00825BFC /* main.swift */; };
+		BEC6EF1C1C2954AD00BE6BAD /* Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEC6EF1B1C2954AD00BE6BAD /* Error.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -31,6 +32,7 @@
 		BE6974A31C27E6D200825BFC /* Scanner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Scanner.swift; sourceTree = "<group>"; };
 		BE6974A51C280E2E00825BFC /* Interpreter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Interpreter.swift; sourceTree = "<group>"; };
 		BE6974A71C28103B00825BFC /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		BEC6EF1B1C2954AD00BE6BAD /* Error.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Error.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -67,6 +69,7 @@
 				BE6974A31C27E6D200825BFC /* Scanner.swift */,
 				BE6974A51C280E2E00825BFC /* Interpreter.swift */,
 				BE6974A71C28103B00825BFC /* main.swift */,
+				BEC6EF1B1C2954AD00BE6BAD /* Error.swift */,
 			);
 			path = SwiftLisp;
 			sourceTree = "<group>";
@@ -131,6 +134,7 @@
 				BE6974A61C280E2E00825BFC /* Interpreter.swift in Sources */,
 				BE6974A41C27E6D200825BFC /* Scanner.swift in Sources */,
 				BE6974A81C28103B00825BFC /* main.swift in Sources */,
+				BEC6EF1C1C2954AD00BE6BAD /* Error.swift in Sources */,
 				BE69749D1C27B46200825BFC /* Parser.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -251,6 +255,7 @@
 				BE6974A21C27B46200825BFC /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

@@ -127,6 +127,10 @@ class Scanner: CustomStringConvertible {
     return string[0..<location] + "|" + string[location..<string.characters.count]
   }
   
+  func errorLocation() -> ErrorLocation {
+    return ErrorLocation(row: row, column: col)
+  }
+  
   /// Save the current location of the pointer
   private func remember() {
     lastLocation = location

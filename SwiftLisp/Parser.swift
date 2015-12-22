@@ -8,14 +8,7 @@
 
 import Foundation
 
-enum SyntaxError: ErrorType {
-  case UnexpectedParen(line: Int, col: Int)
-  case ExpectedParen(line: Int, col: Int)
-  case ExpectedQuote(line: Int, col: Int)
-  case UnknownIdentifier(line: Int, col: Int)
-}
-
-protocol Atom: CustomStringConvertible {
+protocol Atom: CustomStringConvertible, ErrorLocatable {
   var quoted: Bool { get set }
   func run(namespace: Namespace) -> Atom
 }
@@ -23,12 +16,15 @@ protocol Atom: CustomStringConvertible {
 struct Identifier: Atom {
   let value: String
   var quoted: Bool
+  let location: ErrorLocation?
   
   func run(namespace: Namespace) -> Atom {
-    if let v = namespace.functions[value] {
+    // FIXME This is glitchy
+    if var v = namespace.functions[value] {
+      v.quoted = quoted
       return v
     } else {
-      return Nil()
+      return Nil(location: location)
     }
   }
   
@@ -40,10 +36,12 @@ struct Identifier: Atom {
 struct Str: Atom {
   let value: String
   var quoted: Bool
+  let location: ErrorLocation?
   
-  init(value: String) {
+  init(value: String, location: ErrorLocation?) {
     self.value = value
     quoted = false
+    self.location = location
   }
   
   func run(namespace: Namespace) -> Atom {
@@ -58,10 +56,18 @@ struct Str: Atom {
 struct Num: Atom {
   let value: Int
   var quoted: Bool
+  let location: ErrorLocation?
   
   init(value: Int) {
     self.value = value
     quoted = false
+    self.location = nil
+  }
+  
+  init(value: Int, location: ErrorLocation?) {
+    self.value = value
+    quoted = false
+    self.location = location
   }
   
   func run(namespace: Namespace) -> Atom {
@@ -74,7 +80,16 @@ struct Num: Atom {
 }
 
 struct Nil: Atom {
+  let location: ErrorLocation?
   var quoted = false
+  
+  init() {
+    location = nil
+  }
+  
+  init(location: ErrorLocation?) {
+    self.location = location
+  }
   
   func run(namespace: Namespace) -> Atom {
     return self
@@ -88,6 +103,19 @@ struct Nil: Atom {
 struct List: Atom {
   let children: [Atom]
   var quoted: Bool
+  let location: ErrorLocation?
+  
+  init(children: [Atom], quoted: Bool, location: ErrorLocation) {
+    self.children = children
+    self.quoted = quoted
+    self.location = location
+  }
+  
+  init(children: [Atom], quoted: Bool) {
+    self.children = children
+    self.quoted = quoted
+    self.location = nil
+  }
   
   var description: String {
     return (quoted ? "'(" : "(") + children.map({ $0.description }).joinWithSeparator(" ") + ")"
@@ -131,12 +159,12 @@ struct Program: CustomStringConvertible {
       // These chars should terminate the atom
       if let iden = scanner.scanUpToCharacterOrEnd([" ", ")", "(", "[", "]"]) {
         if let num = Int(iden) {
-          return Num(value: num)
+          return Num(value: num, location: scanner.errorLocation())
         } else {
           if iden == "nil" {
             return Nil()
           } else {
-            return Identifier(value: iden, quoted: false)
+            return Identifier(value: iden, quoted: false, location: scanner.errorLocation())
           }
         }
       } else {
@@ -160,9 +188,9 @@ struct Program: CustomStringConvertible {
       atoms.append(atom)
     }
     if scanner.scanString(endChar) {
-      return List(children: atoms, quoted: endChar == "]") // these [] lists can't be evaluated directly
+      return List(children: atoms, quoted: endChar == "]", location: scanner.errorLocation()) // these [] lists can't be evaluated directly
     } else {
-      throw SyntaxError.ExpectedParen(line: scanner.row, col: scanner.col)
+      throw SyntaxError.ExpectedParen(scanner.errorLocation())
     }
   }
   
@@ -171,9 +199,9 @@ struct Program: CustomStringConvertible {
     if scanner.scanString("\"") {
       if let iden = scanner.scanUpToCharacter(["\""]) {
         scanner.scanString("\"")
-        return Str(value: iden)
+        return Str(value: iden, location: scanner.errorLocation())
       } else {
-        throw SyntaxError.ExpectedQuote(line: scanner.row, col: scanner.col)
+        throw SyntaxError.ExpectedQuote(scanner.errorLocation())
       }
     } else {
       return nil
