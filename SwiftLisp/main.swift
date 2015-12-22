@@ -10,4 +10,4 @@ import Foundation
 
 let pr = Program()
 
-pr.parse("(println (defn hello)) [things stuff] ")
+pr.parse("(println \"hello\") (println (+ 6 7)) ('println) '(+ 3 five) [1 2 3]")

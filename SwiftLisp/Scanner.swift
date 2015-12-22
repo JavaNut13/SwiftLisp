@@ -26,13 +26,25 @@ class Scanner: CustomStringConvertible {
   let string: String
   var location: Int = 0
   
+  var row: Int = 0
+  var col: Int = 0
+  
+  private var lastLocation: Int = 0
+  
+  private var lastRow: Int = 0
+  private var lastCol: Int = 0
+  
   init(string: String) {
     self.string = string
   }
   
   func scanString(chomp: String) -> Bool {
     if matchesAtLocation(chomp) {
-      location += chomp.characters.count
+      var n = 0
+      while n < chomp.characters.count {
+        advance()
+        n += 1
+      }
       return true
     }
     return false
@@ -40,51 +52,55 @@ class Scanner: CustomStringConvertible {
   
   func scanUpToString(matchTo: String) -> String? {
     let startLocation = location
+    remember()
     while !matchesAtLocation(matchTo) && location < string.characters.count {
-      location += 1
+      advance()
     }
     if matchesAtLocation(matchTo) {
       return string[startLocation..<location]
     }
-    location = startLocation
+    reset()
     return nil
   }
   
   func scanUpToString(matchTo terms: String...) -> String? {
     let startLocation = location
+    remember()
     while terms.map({ !matchesAtLocation($0) }).filter({ $0 }).count > 0 && location < string.characters.count {
-      location += 1
+      advance()
     }
     if terms.map({ !matchesAtLocation($0) }).filter({ $0 }).count > 0 {
       return string[startLocation..<location]
     }
-    location = startLocation
+    reset()
     return nil
   }
   
-  func scanUpToCharacter(matchTo: Character...) -> String? {
+  func scanUpToCharacter(matchTo: [Character]) -> String? {
     let chars = Set(matchTo)
     let startLocation = location
+    remember()
     while location < string.characters.count && !chars.contains(string[location]) {
-      location += 1
+      advance()
     }
     if location < string.characters.count && chars.contains(string[location]) && location > startLocation {
       return string[startLocation..<location]
     }
-    location = startLocation
+    reset()
     return nil
   }
   
-  func scanUpToCharacterOrEnd(matchTo: Character...) -> String? {
+  func scanUpToCharacterOrEnd(matchTo: [Character]) -> String? {
     let chars = Set(matchTo)
     let startLocation = location
+    remember()
     while location < string.characters.count && !chars.contains(string[location]) {
-      location += 1
+      advance()
     }
     if location > startLocation {
       return string[startLocation..<location]
     }
-    location = startLocation
+    reset()
     return nil
   }
   
@@ -92,7 +108,7 @@ class Scanner: CustomStringConvertible {
   func scanWhitespace() -> Int {
     let start = location
     while location < string.characters.count && (string[location] == " " || string[location] == "\n") {
-      location += 1
+      advance()
     }
     return location - start;
   }
@@ -109,5 +125,29 @@ class Scanner: CustomStringConvertible {
   
   var description: String {
     return string[0..<location] + "|" + string[location..<string.characters.count]
+  }
+  
+  /// Save the current location of the pointer
+  private func remember() {
+    lastLocation = location
+    lastRow = row
+    lastCol = col
+  }
+  
+  /// Move the pointer back to where it was saved at
+  private func reset() {
+    location = lastLocation
+    row = lastRow
+    col = lastCol
+  }
+  
+  private func advance() {
+    location += 1
+    if location < string.characters.count && string[location] == "\n" {
+      row += 1
+      col = -1
+    } else {
+      col += 1
+    }
   }
 }
