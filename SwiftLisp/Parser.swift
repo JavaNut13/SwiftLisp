@@ -32,52 +32,52 @@ struct Program {
   func parse(input: String) {
     var scanner = Scanner(string: input)
     var atoms = [Atom]()
-    while let atom = parseAtom(&scanner) {
+    while let atom = Program.parseAtom(&scanner) {
       atoms.append(atom)
       scanner.scanWhitespace()
     }
     print(atoms)
   }
-}
-
-func parseAtom(inout scanner: Scanner) -> Atom? {
-  scanner.scanWhitespace()
-  if scanner.pointingAt("(") || scanner.pointingAt("[") {
-    return parseList(&scanner)
-  } else {
-    // These chars should terminate the atom
-    if let iden = scanner.scanUpToCharacterOrEnd(" ", ")", "(", "[", "]") {
-      return Identifier(value: iden)
+  
+  static func parseAtom(inout scanner: Scanner) -> Atom? {
+    scanner.scanWhitespace()
+    if scanner.pointingAt("(") || scanner.pointingAt("[") {
+      return parseList(&scanner)
     } else {
-      return nil
+      // These chars should terminate the atom
+      if let iden = scanner.scanUpToCharacterOrEnd(" ", ")", "(", "[", "]") {
+        return Identifier(value: iden)
+      } else {
+        return nil
+      }
     }
   }
-}
-
-func parseList(inout scanner: Scanner) -> Atom? {
-  scanner.scanWhitespace()
-  if scanner.scanString("(") {
-    var atoms = [Atom]()
-    while let atom = parseAtom(&scanner) {
-      atoms.append(atom)
-    }
-    if scanner.scanString(")") {
-      return List(children: atoms)
+  
+  static func parseList(inout scanner: Scanner) -> Atom? {
+    scanner.scanWhitespace()
+    if scanner.scanString("(") {
+      var atoms = [Atom]()
+      while let atom = parseAtom(&scanner) {
+        atoms.append(atom)
+      }
+      if scanner.scanString(")") {
+        return List(children: atoms)
+      } else {
+        return nil
+      }
+    } else if scanner.scanString("[") {
+      var atoms = [Atom]()
+      while let atom = parseAtom(&scanner) {
+        atoms.append(atom)
+      }
+      if scanner.scanString("]") {
+        return List(children: atoms)
+      } else {
+        return nil
+      }
     } else {
       return nil
     }
-  } else if scanner.scanString("[") {
-    var atoms = [Atom]()
-    while let atom = parseAtom(&scanner) {
-      atoms.append(atom)
-    }
-    if scanner.scanString("]") {
-      return List(children: atoms)
-    } else {
-      return nil
-    }
-  } else {
-    return nil
   }
 }
 
