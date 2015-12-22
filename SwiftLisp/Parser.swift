@@ -16,24 +16,26 @@ enum SyntaxError: ErrorType {
 }
 
 protocol Atom: CustomStringConvertible {
-  
+  var quoted: Bool { get set }
 }
 
-protocol Evaluatable: Atom {
-  var noEvaluate: Bool { get set }
-}
-
-struct Identifier: Evaluatable {
+struct Identifier: Atom {
   let value: String
-  var noEvaluate: Bool
+  var quoted: Bool
   
   var description: String {
-    return (noEvaluate ? "'" : "") + value
+    return (quoted ? "'" : "") + value
   }
 }
 
 struct Str: Atom {
   let value: String
+  var quoted: Bool
+  
+  init(value: String) {
+    self.value = value
+    quoted = false
+  }
   
   var description: String {
     return "\"" + value + "\""
@@ -42,34 +44,72 @@ struct Str: Atom {
 
 struct Num: Atom {
   let value: Int
+  var quoted: Bool
+  
+  init(value: Int) {
+    self.value = value
+    quoted = false
+  }
   
   var description: String {
     return String(value)
   }
 }
 
-struct List: Evaluatable {
-  let children: [Atom]
-  var noEvaluate: Bool
+struct Nil: Atom {
+  var quoted = false
   
   var description: String {
-    return (noEvaluate ? "'(" : "(") + children.map({ $0.description }).joinWithSeparator(" ") + ")"
+    return "nil"
   }
 }
 
-struct Program {
-  func parse(input: String) {
+struct List: Atom {
+  let children: [Atom]
+  var quoted: Bool
+  
+  func run(namespace: [String: Atom]) -> Atom {
+    if quoted {
+      return self
+    }
+    if let fun = children.first as? Function {
+      return fun.run(namespace, args: Array(children.dropFirst(1)))
+    } else if let iden = children.first as? Identifier, let fun = namespace[iden.value] as? Function {
+      return fun.run(namespace, args: Array(children.dropFirst(1)))
+    } else {
+      var res = [Atom]()
+      for child in children {
+        if let lst = child as? List {
+          res.append(lst.run(namespace))
+        } else {
+          res.append(child)
+        }
+      }
+      return List(children: res, quoted: true)
+    }
+  }
+  
+  var description: String {
+    return (quoted ? "'(" : "(") + children.map({ $0.description }).joinWithSeparator(" ") + ")"
+  }
+}
+
+
+
+struct Program: CustomStringConvertible {
+  let statements: [Atom]
+  
+  init(_ input: String) throws {
     var scanner = Scanner(string: input)
     var atoms = [Atom]()
-    do {
-      while let atom = try Program.parseAtom(&scanner) {
-        atoms.append(atom)
-        scanner.scanWhitespace()
-      }
-    } catch {
-      print(error)
+    while let atom = try Program.parseAtom(&scanner) {
+      atoms.append(atom)
     }
-    print(atoms)
+    statements = atoms
+  }
+  
+  var description: String {
+    return statements.map({ $0.description }).joinWithSeparator("\n")
   }
   
   static func parseAtom(inout scanner: Scanner) throws -> Atom? {
@@ -79,21 +119,25 @@ struct Program {
       return try parseList(&scanner)
     } else if scanner.pointingAt("\"") { // scan a string
       return try parseString(&scanner)
-    } else if scanner.scanString("'") { // scan an identifier or number value
+    } else if scanner.scanString("'") { // scan a 'quoted value
       let atom = try parseAtom(&scanner)
-      if var eval = atom as? Evaluatable {
-        eval.noEvaluate = true
+      if var eval = atom {
+        eval.quoted = true
         return eval
       } else {
         return atom
       }
-    } else {
+    } else { // scan an identifier or number value
       // These chars should terminate the atom
       if let iden = scanner.scanUpToCharacterOrEnd([" ", ")", "(", "[", "]"]) {
         if let num = Int(iden) {
           return Num(value: num)
         } else {
-          return Identifier(value: iden, noEvaluate: false)
+          if iden == "nil" {
+            return Nil()
+          } else {
+            return Identifier(value: iden, quoted: false)
+          }
         }
       } else {
         return nil
@@ -116,7 +160,7 @@ struct Program {
       atoms.append(atom)
     }
     if scanner.scanString(endChar) {
-      return List(children: atoms, noEvaluate: endChar == "]") // these [] lists can't be evaluated directly
+      return List(children: atoms, quoted: endChar == "]") // these [] lists can't be evaluated directly
     } else {
       throw SyntaxError.ExpectedParen(line: scanner.row, col: scanner.col)
     }

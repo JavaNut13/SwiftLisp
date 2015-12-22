@@ -8,6 +8,9 @@
 
 import Foundation
 
-let pr = Program()
+let pr = try! Program("(println \"hello world\") (println 4)")
 
-pr.parse("(println \"hello\") (println (+ 6 7)) ('println) '(+ 3 five) [1 2 3]")
+print(pr)
+
+print("---")
+pr.run()
