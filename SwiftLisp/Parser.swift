@@ -68,27 +68,6 @@ struct List: Atom {
   let children: [Atom]
   var quoted: Bool
   
-  func run(namespace: [String: Atom]) -> Atom {
-    if quoted {
-      return self
-    }
-    if let fun = children.first as? Function {
-      return fun.run(namespace, args: Array(children.dropFirst(1)))
-    } else if let iden = children.first as? Identifier, let fun = namespace[iden.value] as? Function {
-      return fun.run(namespace, args: Array(children.dropFirst(1)))
-    } else {
-      var res = [Atom]()
-      for child in children {
-        if let lst = child as? List {
-          res.append(lst.run(namespace))
-        } else {
-          res.append(child)
-        }
-      }
-      return List(children: res, quoted: true)
-    }
-  }
-  
   var description: String {
     return (quoted ? "'(" : "(") + children.map({ $0.description }).joinWithSeparator(" ") + ")"
   }
