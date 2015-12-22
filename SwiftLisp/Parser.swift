@@ -11,6 +11,7 @@ import Foundation
 protocol Atom: CustomStringConvertible, ErrorLocatable {
   var quoted: Bool { get set }
   func run(namespace: Namespace) -> Atom
+  var show: String { get }
 }
 
 struct Identifier: Atom {
@@ -20,16 +21,19 @@ struct Identifier: Atom {
   
   func run(namespace: Namespace) -> Atom {
     // FIXME This is glitchy
-    if var v = namespace.functions[value] {
+    if var v = namespace[value] {
       v.quoted = quoted
       return v
     } else {
-      return Nil(location: location)
+      return Nil()
     }
   }
   
   var description: String {
     return (quoted ? "'" : "") + value
+  }
+  var show: String {
+    return description
   }
 }
 
@@ -50,6 +54,9 @@ struct Str: Atom {
   
   var description: String {
     return "\"" + value + "\""
+  }
+  var show: String {
+    return value
   }
 }
 
@@ -77,6 +84,9 @@ struct Num: Atom {
   var description: String {
     return String(value)
   }
+  var show: String {
+    return description
+  }
 }
 
 struct Nil: Atom {
@@ -97,6 +107,9 @@ struct Nil: Atom {
   
   var description: String {
     return "nil"
+  }
+  var show: String {
+    return description
   }
 }
 
@@ -119,6 +132,9 @@ struct List: Atom {
   
   var description: String {
     return (quoted ? "'(" : "(") + children.map({ $0.description }).joinWithSeparator(" ") + ")"
+  }
+  var show: String {
+    return description
   }
 }
 

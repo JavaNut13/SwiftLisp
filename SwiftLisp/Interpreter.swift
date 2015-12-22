@@ -8,11 +8,24 @@
 
 import Foundation
 
-class Namespace {
-  var functions = [String: Atom]()
+class Namespace: CustomStringConvertible {
+  var assignments = [String: Atom]()
+  
+  subscript(key: String) -> Atom? {
+    get {
+      return assignments[key]
+    }
+    set {
+      assignments[key] = newValue
+    }
+  }
   
   func add(name: String, code: (namespace: Namespace, args: [Atom]) -> Atom) {
-    functions[name] = Native(name: name, code: code)
+    assignments[name] = Native(name: name, code: code)
+  }
+  
+  var description: String {
+    return assignments.description
   }
 }
 
@@ -39,6 +52,9 @@ struct Native: Function {
   func run(namespace: Namespace) -> Atom {
     return self
   }
+  var show: String {
+    return description
+  }
 }
 
 extension List {
@@ -48,11 +64,17 @@ extension List {
       lst.quoted = false
       return lst
     }
-    let runChildren = children.map({ $0.run(namespace) })
-    if let fun = runChildren.first as? Function where !fun.quoted {
-      return fun.run(namespace, args: Array(runChildren.dropFirst(1)))
+//    let runChildren = children.map({ $0.run(namespace) })
+    if let first = children.first?.run(namespace) {
+      if let fun = first as? Function where !fun.quoted {
+        return fun.run(namespace, args: Array(children.dropFirst(1)))
+      } else if children.count > 1 {
+        return children.dropFirst(1).map({ $0.run(namespace) }).last!
+      } else {
+        return first
+      }
     } else {
-      return List(children: runChildren, quoted: true)
+      return Nil()
     }
   }
 }
@@ -61,8 +83,8 @@ extension List {
 extension Program {
   func run() {
     let global = Namespace()
-    global.add("println") { _, args in
-      print(args.map({ $0 as? Str == nil ? $0.description : ($0 as! Str).value }).joinWithSeparator(" "))
+    global.add("println") { namespace, args in
+      print(args.map({ $0.run(namespace) }).map({ $0.show }).joinWithSeparator(" "))
       return Nil()
     }
     global.add("+") { _, args in
@@ -71,12 +93,49 @@ extension Program {
     global.add("*") { _, args in
       return Num(value: args.reduce(1, combine: { $0 * ($1 as! Num).value }))
     }
-    global.add("fst") { _, args in
-      return (args.first as! List).children.first!
+    global.add("=") { namespace, args in
+      let lhs = args[0].run(namespace)
+      let rhs = args[1].run(namespace)
+      if lhs.show == rhs.show {
+        return lhs
+      } else {
+        return Nil()
+      }
     }
     
-    let lst = List(children: statements, quoted: false)
-    lst.run(global)
+    global.add("defn") { namespace, args in
+      let name = (args.first! as! Identifier).value
+      let argNames = (args[1] as! List).children.map({ ($0 as! Identifier).value })
+      let theList = args[2] as! List
+      namespace.add(name) { space, passed in
+        let tmpStore = argNames.map({ ($0, space[$0]) })
+        for (i, argName) in argNames.enumerate() {
+          space[argName] = passed[i].run(namespace)
+        }
+        let res = theList.run(space)
+        for (argName, value) in tmpStore {
+          space[argName] = value
+        }
+        return res
+      }
+      return namespace[name]!
+    }
+    
+    global.add("if") { namespace, args in
+      let condition = args.first!.run(namespace)
+      let res: Atom
+      if let _ = condition as? Nil { // it's false
+        if args.count > 2 {
+          res = args[2].run(namespace)
+        } else {
+          res = Nil()
+        }
+      } else {
+        res = args[1].run(namespace)
+      }
+      return res
+    }
+    statements.forEach({ $0.run(global) })
   }
 }
 
