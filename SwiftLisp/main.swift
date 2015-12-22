@@ -8,7 +8,7 @@
 
 import Foundation
 
-let pr = try! Program("(println (+ 1 2 3 (* 4 5)))")
+let pr = try! Program("(println (+ 1 2 3 (* 4 5 (fst(-1)))))")
 
 print(pr)
 

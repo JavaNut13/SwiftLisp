@@ -71,6 +71,10 @@ extension Program {
     global.add("*") { _, args in
       return Num(value: args.reduce(1, combine: { $0 * ($1 as! Num).value }))
     }
+    global.add("fst") { _, args in
+      return (args.first as! List).children.first!
+    }
+    
     let lst = List(children: statements, quoted: false)
     lst.run(global)
   }
