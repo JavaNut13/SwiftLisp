@@ -30,22 +30,12 @@ extension Space {
       }
     }
     
-    add("defn") { outerSpace, funcArgs in
-      let name = (funcArgs.first! as! Identifier).value
-      let argNames = ((funcArgs[1] as! Literal).value as! List).children.map({ ($0 as! Identifier).value })
-      let theList = funcArgs[2] as! List
-      outerSpace.add(name) { innerSpace, args in
-        let oldArgValues = argNames.map({ ($0, innerSpace[$0]) })
-        for (i, argName) in argNames.enumerate() {
-          innerSpace[argName] = args[i].run(outerSpace)
-        }
-        let res = theList.run(innerSpace)
-        for (argName, value) in oldArgValues {
-          innerSpace[argName] = value
-        }
-        return res
-      }
-      return outerSpace[name]!
+    add("defn") { space, args in
+      let name = (args.first! as! Identifier).value
+      let listArgs = (args[1].run(space) as! Literal).value as! List
+      let code = args[2] as! List
+      space[name] = Space.createFunction(name, space: space, args: listArgs, code: code)
+      return Nil()
     }
     
     add("if") { namespace, args in
@@ -70,5 +60,27 @@ extension Space {
         return args.first!
       }
     }
+    
+    add("fn") { space, args in
+      let listArgs = (args[0].run(space) as! Literal).value as! List
+      let code = args[1] as! List
+      return Space.createFunction("anonymous", space: space, args: listArgs, code: code)
+    }
+  }
+  
+  private static func createFunction(name: String, space: Space, args: List, code: List) -> Function {
+    let argNames = args.children.map({ ($0 as! Identifier).value })
+    let fun = Native(name: name, code: { innerSpace, args in
+      let oldArgValues = argNames.map({ ($0, innerSpace[$0]) })
+      for (i, argName) in argNames.enumerate() {
+        innerSpace[argName] = args[i].run(space)
+      }
+      let res = code.run(innerSpace)
+      for (argName, value) in oldArgValues {
+        innerSpace[argName] = value
+      }
+      return res
+    })
+    return fun
   }
 }
