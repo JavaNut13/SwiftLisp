@@ -14,11 +14,13 @@ extension Space {
       print(args.map({ $0.run(namespace) }).map({ $0.show }).joinWithSeparator(" "))
       return Nil()
     }
-    add("+") { _, args in
-      return Num(value: args.reduce(0, combine: { $0 + ($1 as! Num).value }))
+    add("+") { space, args in
+      let values = args.map({ ($0.run(space) as! Num).value })
+      return Num(value: values.reduce(0, combine: { $0 + $1 }))
     }
-    add("*") { _, args in
-      return Num(value: args.reduce(1, combine: { $0 * ($1 as! Num).value }))
+    add("*") { space, args in
+      let values = args.map({ ($0.run(space) as! Num).value })
+      return Num(value: values.reduce(1, combine: { $0 * $1 }))
     }
     add("=") { namespace, args in
       let lhs = args[0].run(namespace)
@@ -54,10 +56,11 @@ extension Space {
     }
     
     add("eval") { space, args in
-      if let arg = args.first?.run(space) as? Literal {
-        return arg.value
+      if let arg = args.first as? Literal {
+        return arg.value.run(space)
       } else {
-        return args.first!
+        // TODO throw error - can't eval non-literal
+        return Nil()
       }
     }
     
@@ -65,6 +68,14 @@ extension Space {
       let listArgs = (args[0].run(space) as! Literal).value as! List
       let code = args[1] as! List
       return Space.createFunction("anonymous", space: space, args: listArgs, code: code)
+    }
+    add("map") { space, args in
+      let fun = args.first!.run(space) as! Function
+      let list = ((args[1].run(space) as! Literal).value as! List).children
+      let result = list.map({ item in
+        fun.run(space, args: [item.run(space)])
+      })
+      return List(children: result)
     }
   }
   
