@@ -39,7 +39,7 @@ struct Literal: Atom {
   let location: ErrorLocation?
   
   func run(space: Space) -> Atom {
-    return value
+    return self
   }
   
   var description: String {
@@ -179,21 +179,18 @@ struct Program: CustomStringConvertible {
       } else {
         throw SyntaxError.ExpectedAtom(scanner.errorLocation())
       }
-    } else { // scan an identifier or number value
-      // These chars should terminate the atom
-      if let iden = scanner.scanUpToCharacterOrEnd([" ", ")", "(", "[", "]"]) {
-        if let num = Int(iden) {
-          return Num(value: num, location: scanner.errorLocation())
-        } else {
-          if iden == "nil" {
-            return Nil()
-          } else {
-            return Identifier(value: iden, location: scanner.errorLocation())
-          }
-        }
+    } else if let iden = scanner.scanUpToCharacterOrEnd([" ", ")", "(", "[", "]"]) {
+      if let num = Int(iden) {
+        return Num(value: num, location: scanner.errorLocation())
       } else {
-        return nil
+        if iden == "nil" {
+          return Nil()
+        } else {
+          return Identifier(value: iden, location: scanner.errorLocation())
+        }
       }
+    } else {
+      return nil
     }
   }
   
