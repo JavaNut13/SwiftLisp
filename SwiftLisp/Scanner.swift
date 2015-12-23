@@ -26,8 +26,8 @@ class Scanner: CustomStringConvertible {
   let string: String
   var location: Int = 0
   
-  var row: Int = 0
-  var col: Int = 0
+  var row: Int = 1
+  var col: Int = 1
   
   private var lastLocation: Int = 0
   
@@ -149,7 +149,7 @@ class Scanner: CustomStringConvertible {
     location += 1
     if location < string.characters.count && string[location] == "\n" {
       row += 1
-      col = -1
+      col = 0
     } else {
       col += 1
     }

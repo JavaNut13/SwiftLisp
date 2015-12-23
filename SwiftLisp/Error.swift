@@ -21,6 +21,7 @@ enum SyntaxError: ErrorType {
   case UnexpectedParen(ErrorLocation?)
   case ExpectedParen(ErrorLocation?)
   case ExpectedQuote(ErrorLocation?)
+  case ExpectedAtom(ErrorLocation?)
 }
 
 enum RuntimeError: ErrorType {

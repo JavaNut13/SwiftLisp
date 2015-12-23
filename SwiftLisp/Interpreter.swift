@@ -8,7 +8,7 @@
 
 import Foundation
 
-class Namespace: CustomStringConvertible {
+class Space: CustomStringConvertible {
   var assignments = [String: Atom]()
   
   subscript(key: String) -> Atom? {
@@ -20,7 +20,7 @@ class Namespace: CustomStringConvertible {
     }
   }
   
-  func add(name: String, code: (namespace: Namespace, args: [Atom]) -> Atom) {
+  func add(name: String, code: (space: Space, args: [Atom]) -> Atom) {
     assignments[name] = Native(name: name, code: code)
   }
   
@@ -30,7 +30,7 @@ class Namespace: CustomStringConvertible {
 }
 
 protocol Function: Atom {
-  func run(namespace: Namespace, args: [Atom]) -> Atom
+  func run(space: Space, args: [Atom]) -> Atom
 }
 
 struct Native: Function {
@@ -38,18 +38,18 @@ struct Native: Function {
   let description: String
   let location: ErrorLocation? = nil
   
-  private let code: (namespace: Namespace, args: [Atom]) -> Atom
+  private let code: (namespace: Space, args: [Atom]) -> Atom
   
-  init(name: String, code: (namespace: Namespace, args: [Atom]) -> Atom) {
+  init(name: String, code: (namespace: Space, args: [Atom]) -> Atom) {
     self.code = code
     description = name
   }
   
-  func run(namespace: Namespace, args: [Atom]) -> Atom {
+  func run(namespace: Space, args: [Atom]) -> Atom {
     return code(namespace: namespace, args: args)
   }
   
-  func run(namespace: Namespace) -> Atom {
+  func run(namespace: Space) -> Atom {
     return self
   }
   var show: String {
@@ -58,18 +58,13 @@ struct Native: Function {
 }
 
 extension List {
-  func run(namespace: Namespace) -> Atom {
-    if quoted {
-      var lst = self
-      lst.quoted = false
-      return lst
-    }
+  func run(space: Space) -> Atom {
 //    let runChildren = children.map({ $0.run(namespace) })
-    if let first = children.first?.run(namespace) {
-      if let fun = first as? Function where !fun.quoted {
-        return fun.run(namespace, args: Array(children.dropFirst(1)))
+    if let first = children.first?.run(space) {
+      if let fun = first as? Function {
+        return fun.run(space, args: Array(children.dropFirst(1)))
       } else if children.count > 1 {
-        return children.dropFirst(1).map({ $0.run(namespace) }).last!
+        return children.dropFirst(1).map({ $0.run(space) }).last!
       } else {
         return first
       }
@@ -82,7 +77,7 @@ extension List {
 
 extension Program {
   func run() {
-    let global = Namespace()
+    let global = Space()
     global.add("println") { namespace, args in
       print(args.map({ $0.run(namespace) }).map({ $0.show }).joinWithSeparator(" "))
       return Nil()
@@ -103,22 +98,22 @@ extension Program {
       }
     }
     
-    global.add("defn") { namespace, args in
-      let name = (args.first! as! Identifier).value
-      let argNames = (args[1] as! List).children.map({ ($0 as! Identifier).value })
-      let theList = args[2] as! List
-      namespace.add(name) { space, passed in
-        let tmpStore = argNames.map({ ($0, space[$0]) })
+    global.add("defn") { outerSpace, funcArgs in
+      let name = (funcArgs.first! as! Identifier).value
+      let argNames = (funcArgs[1].run(outerSpace) as! List).children.map({ ($0 as! Identifier).value })
+      let theList = funcArgs[2] as! List
+      outerSpace.add(name) { innerSpace, args in
+        let oldArgValues = argNames.map({ ($0, innerSpace[$0]) })
         for (i, argName) in argNames.enumerate() {
-          space[argName] = passed[i].run(namespace)
+          innerSpace[argName] = args[i].run(outerSpace)
         }
-        let res = theList.run(space)
-        for (argName, value) in tmpStore {
-          space[argName] = value
+        let res = theList.run(innerSpace)
+        for (argName, value) in oldArgValues {
+          innerSpace[argName] = value
         }
         return res
       }
-      return namespace[name]!
+      return outerSpace[name]!
     }
     
     global.add("if") { namespace, args in

@@ -9,20 +9,17 @@
 import Foundation
 
 protocol Atom: CustomStringConvertible, ErrorLocatable {
-  var quoted: Bool { get set }
-  func run(namespace: Namespace) -> Atom
+  func run(space: Space) -> Atom
   var show: String { get }
 }
 
 struct Identifier: Atom {
   let value: String
-  var quoted: Bool
   let location: ErrorLocation?
   
-  func run(namespace: Namespace) -> Atom {
+  func run(space: Space) -> Atom {
     // FIXME This is glitchy
-    if var v = namespace[value] {
-      v.quoted = quoted
+    if let v = space[value] {
       return v
     } else {
       return Nil()
@@ -30,25 +27,39 @@ struct Identifier: Atom {
   }
   
   var description: String {
-    return (quoted ? "'" : "") + value
+    return value
   }
   var show: String {
     return description
   }
 }
 
+struct Literal: Atom {
+  let value: Atom
+  let location: ErrorLocation?
+  
+  func run(space: Space) -> Atom {
+    return value
+  }
+  
+  var description: String {
+    return "'" + value.description
+  }
+  var show: String {
+    return "'" + value.show
+  }
+}
+
 struct Str: Atom {
   let value: String
-  var quoted: Bool
   let location: ErrorLocation?
   
   init(value: String, location: ErrorLocation?) {
     self.value = value
-    quoted = false
     self.location = location
   }
   
-  func run(namespace: Namespace) -> Atom {
+  func run(namespace: Space) -> Atom {
     return self
   }
   
@@ -62,22 +73,19 @@ struct Str: Atom {
 
 struct Num: Atom {
   let value: Int
-  var quoted: Bool
   let location: ErrorLocation?
   
   init(value: Int) {
     self.value = value
-    quoted = false
     self.location = nil
   }
   
   init(value: Int, location: ErrorLocation?) {
     self.value = value
-    quoted = false
     self.location = location
   }
   
-  func run(namespace: Namespace) -> Atom {
+  func run(space: Space) -> Atom {
     return self
   }
   
@@ -91,7 +99,6 @@ struct Num: Atom {
 
 struct Nil: Atom {
   let location: ErrorLocation?
-  var quoted = false
   
   init() {
     location = nil
@@ -101,7 +108,7 @@ struct Nil: Atom {
     self.location = location
   }
   
-  func run(namespace: Namespace) -> Atom {
+  func run(space: Space) -> Atom {
     return self
   }
   
@@ -115,23 +122,20 @@ struct Nil: Atom {
 
 struct List: Atom {
   let children: [Atom]
-  var quoted: Bool
   let location: ErrorLocation?
   
-  init(children: [Atom], quoted: Bool, location: ErrorLocation) {
+  init(children: [Atom], location: ErrorLocation) {
     self.children = children
-    self.quoted = quoted
     self.location = location
   }
   
-  init(children: [Atom], quoted: Bool) {
+  init(children: [Atom]) {
     self.children = children
-    self.quoted = quoted
     self.location = nil
   }
   
   var description: String {
-    return (quoted ? "'(" : "(") + children.map({ $0.description }).joinWithSeparator(" ") + ")"
+    return "(" + children.map({ $0.description }).joinWithSeparator(" ") + ")"
   }
   var show: String {
     return description
@@ -159,17 +163,21 @@ struct Program: CustomStringConvertible {
   static func parseAtom(inout scanner: Scanner) throws -> Atom? {
     scanner.scanWhitespace()
     // Scan an array
-    if scanner.pointingAt("(") || scanner.pointingAt("[") {
+    if scanner.pointingAt("(") {
       return try parseList(&scanner)
+    } else if scanner.pointingAt("[") {
+      if let list = try parseList(&scanner) {
+        return Literal(value: list, location: scanner.errorLocation())
+      } else {
+        throw SyntaxError.ExpectedAtom(scanner.errorLocation())
+      }
     } else if scanner.pointingAt("\"") { // scan a string
       return try parseString(&scanner)
     } else if scanner.scanString("'") { // scan a 'quoted value
-      let atom = try parseAtom(&scanner)
-      if var eval = atom {
-        eval.quoted = true
-        return eval
+      if let atom = try parseAtom(&scanner) {
+        return Literal(value: atom, location: scanner.errorLocation())
       } else {
-        return atom
+        throw SyntaxError.ExpectedAtom(scanner.errorLocation())
       }
     } else { // scan an identifier or number value
       // These chars should terminate the atom
@@ -180,7 +188,7 @@ struct Program: CustomStringConvertible {
           if iden == "nil" {
             return Nil()
           } else {
-            return Identifier(value: iden, quoted: false, location: scanner.errorLocation())
+            return Identifier(value: iden, location: scanner.errorLocation())
           }
         }
       } else {
@@ -204,7 +212,7 @@ struct Program: CustomStringConvertible {
       atoms.append(atom)
     }
     if scanner.scanString(endChar) {
-      return List(children: atoms, quoted: endChar == "]", location: scanner.errorLocation()) // these [] lists can't be evaluated directly
+      return List(children: atoms, location: scanner.errorLocation())
     } else {
       throw SyntaxError.ExpectedParen(scanner.errorLocation())
     }
