@@ -77,6 +77,23 @@ extension Space {
       })
       return List(children: result)
     }
+    add("filter") { space, args in
+      let fun = args.first!.run(space) as! Function
+      let list = ((args[1].run(space) as! Literal).value as! List).children
+      let result = list.filter({ item in
+        fun.run(space, args: [item.run(space)]) as? Nil != nil
+      })
+      return List(children: result)
+    }
+    add("reduce") { space, args in
+      let fun = args.first!.run(space) as! Function
+      let initial = args[1].run(space)
+      let list = ((args[2].run(space) as! Literal).value as! List).children
+      let result = list.reduce(initial, combine: { comb, item in
+        fun.run(space, args: [comb, item.run(space)])
+      })
+      return result
+    }
   }
   
   private static func createFunction(name: String, space: Space, args: List, code: List) -> Function {
