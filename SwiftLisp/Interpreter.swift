@@ -53,7 +53,7 @@ struct Native: Function {
     return code(namespace: namespace, args: args)
   }
   
-  func run(namespace: Space) -> Atom {
+  func expand(namespace: Space) -> Atom {
     return self
   }
   var show: String {
@@ -62,8 +62,8 @@ struct Native: Function {
 }
 
 extension List {
-  func run(space: Space) -> Atom {
-    if let first = children.first?.run(space) {
+  func expand(space: Space) -> Atom {
+    if let first = children.first?.expand(space) {
       if let fun = first as? Function {
         return fun.run(space, args: Array(children.dropFirst(1)))
       } else if let iden = first as? Identifier {
@@ -74,7 +74,7 @@ extension List {
           return Nil()
         }
       } else if children.count > 1 {
-        return children.dropFirst(1).map({ $0.run(space) }).last!
+        return children.dropFirst(1).map({ $0.expand(space) }).last!
       } else {
         return first
       }
@@ -88,7 +88,7 @@ extension List {
 extension Program {
   func run() {
     let global = Space()
-    statements.forEach({ $0.run(global) })
+    statements.forEach({ $0.expand(global) })
   }
 }
 

@@ -9,7 +9,7 @@
 import Foundation
 
 protocol Atom: CustomStringConvertible, ErrorLocatable {
-  func run(space: Space) -> Atom
+  func expand(space: Space) -> Atom
   var show: String { get }
 }
 
@@ -17,7 +17,7 @@ struct Identifier: Atom {
   let value: String
   let location: ErrorLocation?
   
-  func run(space: Space) -> Atom {
+  func expand(space: Space) -> Atom {
     // FIXME This is glitchy
     if let v = space[value] {
       return v
@@ -38,7 +38,12 @@ struct Literal: Atom {
   let value: Atom
   let location: ErrorLocation?
   
-  func run(space: Space) -> Atom {
+  init(_ value: Atom) {
+    self.value = value
+    self.location = value.location
+  }
+  
+  func expand(space: Space) -> Atom {
     return self
   }
   
@@ -59,7 +64,7 @@ struct Str: Atom {
     self.location = location
   }
   
-  func run(namespace: Space) -> Atom {
+  func expand(namespace: Space) -> Atom {
     return self
   }
   
@@ -85,7 +90,7 @@ struct Num: Atom {
     self.location = location
   }
   
-  func run(space: Space) -> Atom {
+  func expand(space: Space) -> Atom {
     return self
   }
   
@@ -111,7 +116,7 @@ struct Dec: Atom {
     self.location = location
   }
   
-  func run(space: Space) -> Atom {
+  func expand(space: Space) -> Atom {
     return self
   }
   
@@ -134,7 +139,7 @@ struct Nil: Atom {
     self.location = location
   }
   
-  func run(space: Space) -> Atom {
+  func expand(space: Space) -> Atom {
     return self
   }
   
@@ -193,7 +198,7 @@ struct Program: CustomStringConvertible {
       return try parseList(&scanner)
     } else if scanner.pointingAt("[") {
       if let list = try parseList(&scanner) {
-        return Literal(value: list, location: scanner.errorLocation())
+        return Literal(list)
       } else {
         throw SyntaxError.ExpectedAtom(scanner.errorLocation())
       }
@@ -201,7 +206,7 @@ struct Program: CustomStringConvertible {
       return try parseString(&scanner)
     } else if scanner.scanString("'") { // scan a 'quoted value
       if let atom = try parseAtom(&scanner) {
-        return Literal(value: atom, location: scanner.errorLocation())
+        return Literal(atom)
       } else {
         throw SyntaxError.ExpectedAtom(scanner.errorLocation())
       }
