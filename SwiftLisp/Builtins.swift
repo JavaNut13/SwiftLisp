@@ -94,6 +94,10 @@ extension Space {
       })
       return result
     }
+    
+//    add("cons") { space, args in
+//      if let list = args.first as? List {
+//    }
   }
   
   private static func createFunction(name: String, space: Space, args: List, code: List) -> Function {

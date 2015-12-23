@@ -97,6 +97,32 @@ struct Num: Atom {
   }
 }
 
+struct Dec: Atom {
+  let value: Float
+  let location: ErrorLocation?
+  
+  init(value: Float) {
+    self.value = value
+    self.location = nil
+  }
+  
+  init(value: Float, location: ErrorLocation?) {
+    self.value = value
+    self.location = location
+  }
+  
+  func run(space: Space) -> Atom {
+    return self
+  }
+  
+  var description: String {
+    return String(value)
+  }
+  var show: String {
+    return description
+  }
+}
+
 struct Nil: Atom {
   let location: ErrorLocation?
   
@@ -182,6 +208,8 @@ struct Program: CustomStringConvertible {
     } else if let iden = scanner.scanUpToCharacterOrEnd([" ", ")", "(", "[", "]"]) {
       if let num = Int(iden) {
         return Num(value: num, location: scanner.errorLocation())
+      } else if let num = Float(iden) {
+        return Dec(value: num, location: scanner.errorLocation())
       } else {
         if iden == "nil" {
           return Nil()
